@@ -18,6 +18,12 @@ public class UserServiceImpl implements UserService {
         return userMapper.findByUsername(username);
     }
 
+    /**
+     * register a user
+     *
+     * @param username
+     * @param password
+     */
     @Override
     public void register(String username, String password) {
         //encryption
