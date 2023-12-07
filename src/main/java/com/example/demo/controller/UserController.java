@@ -5,6 +5,7 @@ import com.example.demo.pojo.User;
 import com.example.demo.service.UserService;
 import com.example.demo.utils.JwtUtil;
 import com.example.demo.utils.Md5Util;
+import com.example.demo.utils.ThreadLocalUtil;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -47,9 +48,9 @@ public class UserController {
             //exist and check password
             if (Md5Util.getMD5String(password).equals(loginUser.getPassword())) {
                 //login
-                Map<String,Object> claims = new HashMap<>();
-                claims.put("id",loginUser.getId());
-                claims.put("username",loginUser.getUsername());
+                Map<String, Object> claims = new HashMap<>();
+                claims.put("id", loginUser.getId());
+                claims.put("username", loginUser.getUsername());
                 String token = JwtUtil.genToken(claims);
                 return Result.success(token);
             } else {
@@ -59,10 +60,16 @@ public class UserController {
     }
 
     @GetMapping("/userInfo")
-    public Result<User> userInfo(@RequestHeader(name = "Authorization") String token){
-        Map<String,Object> map = JwtUtil.parseToken(token);
+    public Result<User> userInfo() {
+        Map<String, Object> map = ThreadLocalUtil.get();
         String username = (String) map.get("username");
         User user = userService.findByUsername(username);
         return Result.success(user);
+    }
+
+    @PutMapping("/update")
+    public Result update(@RequestBody User user){
+        userService.update(user);
+        return Result.success();
     }
 }
