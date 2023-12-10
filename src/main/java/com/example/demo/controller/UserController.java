@@ -7,7 +7,9 @@ import com.example.demo.utils.JwtUtil;
 import com.example.demo.utils.Md5Util;
 import com.example.demo.utils.ThreadLocalUtil;
 import jakarta.validation.constraints.Pattern;
+import org.hibernate.validator.constraints.URL;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -67,9 +69,50 @@ public class UserController {
         return Result.success(user);
     }
 
+    /**
+     * put function update entire user info
+     *
+     * @param user user
+     * @return result
+     */
     @PutMapping("/update")
-    public Result update(@RequestBody User user){
+    public Result update(@RequestBody @Validated User user) {
         userService.update(user);
         return Result.success();
+    }
+
+    /**
+     * patch function update some param of user
+     *
+     * @param avatarUrl avatarUrl
+     * @return result
+     */
+    @PatchMapping("/updateAvatar")
+    public Result updateAvatar(@RequestParam @URL String avatarUrl) {
+        userService.updateAvatar(avatarUrl);
+        return Result.success();
+    }
+
+    @PatchMapping("/updatePwd")
+    public Result updatePwd(@RequestBody Map<String, Object> pwdMap) {
+        //check map
+        String oldPwd = (String) pwdMap.get("old_pwd");
+        String newPwd = (String) pwdMap.get("new_pwd");
+        String rePwd = (String) pwdMap.get("re_pwd");
+        if (!StringUtils.hasLength(oldPwd) || !StringUtils.hasLength(newPwd) || !StringUtils.hasLength(rePwd)) {
+            return Result.error("missing parameter of update password");
+        }
+        //check old password
+        Map<String,Object> claim = ThreadLocalUtil.get();
+        User loginUser = userService.findByUsername((String) claim.get("username"));
+        if(!loginUser.getPassword().equals(Md5Util.getMD5String(oldPwd))){
+            return Result.error("old password error");
+        }
+        if(!newPwd.equals(rePwd)){
+            return Result.error("two new password is not matched");
+        }
+        userService.updatePwd(newPwd);
+        return Result.success();
+
     }
 }
